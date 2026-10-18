@@ -1,9 +1,11 @@
-First release of **Mamba Reader**, a free, offline Windows reader with annotations.
+**1.0.1**: installer fix. The installer now closes a running Mamba Reader with a simple per-user step, replacing electron-builder's process check, which intermittently crashed the installer (0xC0000005). No app changes.
+
+The first release of **Mamba Reader**, a free, offline Windows reader with annotations.
 
 **Downloads**
-* `MambaReader-Setup-1.0.0-x64.exe`: the installer. It installs per user to `%LOCALAPPDATA%\Programs\Mamba Reader` and registers `mamba-reader://` and *Open with*.
-* `MambaReader-Portable-1.0.0-x64.exe`: a single exe, no install needed.
-* `MambaReader-1.0.0-win-x64.zip`: the unpacked app.
+* `MambaReader-Setup-1.0.1-x64.exe`: the installer. It installs per user to `%LOCALAPPDATA%\Programs\Mamba Reader` and registers `mamba-reader://` and *Open with*.
+* `MambaReader-Portable-1.0.1-x64.exe`: a single exe, no install needed.
+* `MambaReader-1.0.1-win-x64.zip`: the unpacked app.
 
 The builds are not code-signed. If SmartScreen warns you, click **More info → Run anyway**.
 
