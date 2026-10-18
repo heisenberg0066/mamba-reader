@@ -60,7 +60,7 @@ jobs:
           Start-Sleep 2
           $setup = Get-ChildItem dist\MambaReader-Setup-*.exe | Select-Object -First 1
           $exe = "$env:LOCALAPPDATA\Programs\Mamba Reader\Mamba Reader.exe"
-          for ($try = 1; $try -le 2 -and !(Test-Path $exe); $try++) {
+          for ($try = 1; $try -le 4 -and !(Test-Path $exe); $try++) {
             $p = Start-Process -FilePath $setup.FullName -ArgumentList '/S' -Wait -PassThru
             Write-Host "Setup exit code: $($p.ExitCode) (attempt $try)"
             for ($i = 0; $i -lt 60 -and !(Test-Path $exe); $i++) { Start-Sleep 1 }
