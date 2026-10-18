@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: file: blob: mrpage:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src mrpage:">
+<title>Mamba Reader</title>
+<link rel="stylesheet" href="flip-engine.css">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body class="theme-light">
+<header class="top">
+  <div class="brand" id="homeBtn" title=""><div class="logo">R</div><div class="bn" data-i18n="appName"></div></div>
+  <div class="rt-only row" id="readerBar">
+    <button class="ib" id="backLib" data-i18n-title="library">⟵</button>
+    <button class="ib" id="sideToggle" data-i18n-title="sidebar">☰</button>
+    <div class="btitle" id="bookTitle"></div>
+    <div class="seg" id="modeSeg"><button data-v="flip" data-i18n="flip"></button><button data-v="scroll" data-i18n="scroll"></button></div>
+    <button class="ib" id="prevPg">‹</button><input id="pgInput" class="pg"><span id="pgTotal" class="muted"></span><button class="ib" id="nextPg">›</button>
+    <button class="ib" id="zoomOut">−</button><button class="ib wide" id="zoomVal">100%</button><button class="ib" id="zoomIn">+</button>
+    <button class="ib" id="bmBtn" data-i18n-title="bookmarkPage">☆</button>
+    <div class="menu-wrap"><button class="ib wide" id="exportBtn" data-i18n="export"></button>
+      <div class="menu hidden" id="exportMenu">
+        <button data-x="md" data-i18n="exportMd"></button><button data-x="txt" data-i18n="exportTxt"></button><button data-x="pdf" data-i18n="exportPdfSummary"></button><hr><button data-x="annotated" data-i18n="exportAnnotated"></button>
+      </div></div>
+    <button class="ib" id="fsBtn" data-i18n-title="fullscreen">⛶</button>
+  </div>
+  <div class="grow"></div>
+  <span class="timer" id="timer" data-i18n-title="readingToday">⏱ 0</span>
+  <select id="themeSel" class="sel"><option value="light" data-i18n="light"></option><option value="sepia" data-i18n="sepia"></option><option value="dark" data-i18n="dark"></option></select>
+  <div class="lang"><button data-lang="en">EN</button><button data-lang="ar">عربي</button></div>
+</header>
+
+<!-- LIBRARY -->
+<section id="library" class="view active">
+  <div class="libmain">
+    <div class="libbar">
+      <button class="primary" id="openBooks" data-i18n="openBooks"></button>
+      <input id="libSearch" class="search" data-i18n-ph="searchLibrary">
+      <select id="libSort" class="sel"><option value="recent" data-i18n="sortRecent"></option><option value="title" data-i18n="sortTitle"></option><option value="added" data-i18n="sortAdded"></option><option value="progress" data-i18n="sortProgress"></option></select>
+    </div>
+    <div id="tagBar" class="tags"></div>
+    <div id="continueRow"></div>
+    <div id="shelf" class="shelf"></div>
+    <div id="libEmpty" class="empty hidden"><div class="big">📚</div><div data-i18n="libEmpty"></div></div>
+  </div>
+  <aside class="libside">
+    <h3 data-i18n="readingStats"></h3>
+    <div class="stat"><b id="stToday">0</b> <span data-i18n="minToday"></span></div>
+    <div class="stat"><b id="stStreak">0</b> <span data-i18n="dayStreak"></span></div>
+    <div class="chart" id="weekChart"></div>
+    <div class="stat muted"><span data-i18n="total"></span>: <b id="stTotal">0</b> <span data-i18n="minutes"></span></div>
+    <h3 data-i18n="vocabulary"></h3>
+    <div class="stat"><b id="vocabCount">0</b> <span data-i18n="savedWords"></span></div>
+    <button class="ghost" id="vocabOpen" data-i18n="openVocab"></button>
+    <h3 data-i18n="backup"></h3>
+    <button class="ghost" id="bkExport" data-i18n="backupExport"></button>
+    <button class="ghost" id="bkImport" data-i18n="backupImport"></button>
+    <p class="note" data-i18n="offlineNote"></p>
+  </aside>
+</section>
+
+<!-- READER -->
+<section id="reader" class="view">
+  <aside class="side" id="side">
+    <div class="stabs" id="sideTabs">
+      <button data-p="thumbs" data-i18n-title="pages">▦</button><button data-p="outline" data-i18n-title="contents">≣</button><button data-p="search" data-i18n-title="search">⌕</button>
+      <button data-p="notes" data-i18n-title="annotations">✎</button><button data-p="bookmarks" data-i18n-title="bookmarks">★</button><button data-p="words" data-i18n-title="vocabulary">Aa</button>
+    </div>
+    <div class="spanel" id="p-thumbs"><div id="thumbList" class="thumbs"></div></div>
+    <div class="spanel" id="p-outline"><div id="outlineList" class="olist"></div></div>
+    <div class="spanel" id="p-search"><input id="searchInput" class="search" data-i18n-ph="searchBook"><div id="searchInfo" class="muted small"></div><div id="searchList" class="rlist"></div></div>
+    <div class="spanel" id="p-notes">
+      <input id="noteSearch" class="search" data-i18n-ph="searchNotes">
+      <div class="row wrap" id="noteColors"></div>
+      <select id="noteType" class="sel small"><option value="" data-i18n="allTypes"></option><option value="highlight" data-i18n="t_highlight"></option><option value="underline" data-i18n="t_underline"></option><option value="strike" data-i18n="t_strike"></option><option value="note" data-i18n="t_note"></option><option value="text" data-i18n="t_text"></option><option value="ink" data-i18n="t_ink"></option><option value="shape" data-i18n="t_shape"></option></select>
+      <div id="noteList" class="rlist"></div>
+    </div>
+    <div class="spanel" id="p-bookmarks"><div id="bmList" class="rlist"></div></div>
+    <div class="spanel" id="p-words"><div class="muted small" data-i18n="wordsHint"></div><div id="wordList" class="rlist"></div></div>
+  </aside>
+  <div class="viewer-wrap">
+    <div class="tools" id="tools">
+      <button data-tool="select" class="on" data-i18n-title="tSelect">↖</button>
+      <span class="sep"></span>
+      <button data-tool="highlight" data-i18n-title="t_highlight">🖍</button><button data-tool="underline" data-i18n-title="t_underline"><u>U</u></button><button data-tool="strike" data-i18n-title="t_strike"><s>S</s></button>
+      <span class="sep"></span>
+      <button data-tool="ink" data-i18n-title="t_ink">✒</button><button data-tool="marker" data-i18n-title="t_marker">🖌</button><button data-tool="eraser" data-i18n-title="t_eraser">⌫</button>
+      <span class="sep"></span>
+      <button data-tool="note" data-i18n-title="t_note">🗨</button><button data-tool="text" data-i18n-title="t_text">T</button>
+      <button data-tool="rect" data-i18n-title="t_rect">▭</button><button data-tool="ellipse" data-i18n-title="t_ellipse">◯</button><button data-tool="line" data-i18n-title="t_line">╱</button><button data-tool="arrow" data-i18n-title="t_arrow">➚</button>
+      <span class="sep"></span>
+      <div id="colorPick" class="colors"></div>
+      <select id="widthSel" class="sel small"><option value="1">1</option><option value="2" selected>2</option><option value="4">4</option><option value="8">8</option><option value="14">14</option></select>
+    </div>
+    <div class="viewer" id="viewer"><div id="scrollView" class="scrollview hidden"></div><div id="flipHost" class="fliphost hidden"></div></div>
+  </div>
+</section>
+
+<div id="selPop" class="pop hidden"></div>
+<div id="annPop" class="pop card hidden"></div>
+<div id="modal" class="modal hidden"><div class="mbox"><div class="mhead"><b id="mTitle"></b><button class="ib" id="mClose">✕</button></div><div id="mBody"></div></div></div>
+<div id="dropOverlay" class="dropov hidden"><div data-i18n="dropHere"></div></div>
+<div id="toast" class="toast hidden"></div>
+<script src="i18n.js"></script>
+<script src="flip-engine.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

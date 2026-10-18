@@ -1,0 +1,94 @@
+{
+  "name": "mamba-reader",
+  "productName": "Mamba Reader",
+  "version": "1.0.0",
+  "description": "Free, offline PDF/EPUB/flipbook reader with annotations for Windows",
+  "author": "Ammar",
+  "license": "MIT",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "node test/run-tests.js",
+    "test:ui": "bash test/run-ui.sh",
+    "dist": "electron-builder --win --x64 --publish never"
+  },
+  "dependencies": {
+    "jszip": "^3.10.2",
+    "mupdf": "1.28"
+  },
+  "devDependencies": {
+    "electron": "^33.4.11",
+    "electron-builder": "^25.1.8",
+    "resedit": "^2.0.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/heisenberg0066/mamba-reader.git"
+  },
+  "build": {
+    "appId": "com.ammar.mambareader",
+    "productName": "Mamba Reader",
+    "copyright": "Free for personal use",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "src/**",
+      "build/icon.png",
+      "package.json",
+      "!**/*.map",
+      "!node_modules/resedit/**",
+      "!node_modules/mupdf/dist/*.d.ts"
+    ],
+    "asar": true,
+    "asarUnpack": [
+      "src/worker/**",
+      "node_modules/mupdf/**"
+    ],
+    "npmRebuild": false,
+    "afterPack": "build/afterPack.js",
+    "artifactName": "MambaReader-${version}-win-${arch}.${ext}",
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico",
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowElevation": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Mamba Reader",
+      "include": "build/installer.nsh",
+      "artifactName": "MambaReader-Setup-${version}-x64.${ext}",
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "deleteAppDataOnUninstall": false
+    },
+    "portable": {
+      "artifactName": "MambaReader-Portable-${version}-x64.${ext}"
+    }
+  }
+}
