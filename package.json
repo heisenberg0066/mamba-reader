@@ -1,7 +1,7 @@
 {
   "name": "mamba-reader",
   "productName": "Mamba Reader",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Free, offline PDF/EPUB/flipbook reader with annotations for Windows",
   "author": "Ammar",
   "license": "MIT",

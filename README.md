@@ -18,6 +18,26 @@ Grab the latest version from **[Releases](https://github.com/heisenberg0066/mamb
 
 The builds are not code-signed, so Windows SmartScreen may warn you. Click **More info → Run anyway**.
 
+## PDF editor (1.1.0)
+Click **Edit PDF** in the reader bar, or use Mamba Convert's **Edit PDF**. Everything works offline.
+
+| Edit text and images | Signature | Pages, forms, stamps |
+|---|---|---|
+| ![](docs/editor-1-text.png) | ![](docs/editor-2-signature.png) | ![](docs/editor-3-edits.png) |
+
+* **Text:** edit or delete existing lines (matched font, size and colour), and add text boxes (font, size, colour, bold, italic, alignment).
+* **Images:** move, resize, delete or replace them, and insert new ones.
+* **Whiteout and redact.** Redaction truly removes the content underneath.
+* **Signatures:** draw, type in a handwriting font, or import one. Signatures are saved for reuse. Initials and date stamps are also available.
+* **Pages:** add, delete, reorder, rotate, insert a blank page, and merge a PDF.
+* **Form filling** and **undo/redo**.
+* **Saving:** **Save** writes `<name> (edited).pdf`. The original is only overwritten if you choose it in *Save as…*.
+* **Limits:**
+  * Scanned PDFs have no editable text (no OCR).
+  * Edited lines use the closest standard font, with no paragraph reflow.
+  * Non-Latin new text is embedded as an image.
+* **Command line:** `"Mamba Reader.exe" --edit "C:\path\file.pdf"` or `mamba-reader://edit?path=<url-encoded path>`.
+
 ## Features
 * **Library shelf**
   * Covers, a progress bar and "continue reading".

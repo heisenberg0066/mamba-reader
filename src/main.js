@@ -25,15 +25,16 @@ const logHandoff = (entry) => { try { fs.appendFileSync(path.join(app.getPath('u
 
 /** Extract files from argv / mamba-reader:// URLs. */
 function filesFromArgs(argv) {
-  const out = [];
+  const out = []; let edit = false;
   for (const a of argv.slice(1)) {
+    if (a === '--edit') { edit = true; continue; }
     if (!a || a.startsWith('--')) continue;
     if (a.toLowerCase().startsWith(PROTO + ':')) {
-      try { const u = new URL(a); const p = u.searchParams.get('path') || u.searchParams.get('file') || decodeURIComponent(u.pathname.replace(/^\/+/, '')); if (p) out.push({ file: path.resolve(p), source: 'protocol', page: parseInt(u.searchParams.get('page') || '', 10) || null }); } catch (_) {}
+      try { const u = new URL(a); const p = u.searchParams.get('path') || u.searchParams.get('file') || decodeURIComponent(u.pathname.replace(/^\/+/, '')); const m = u.host === 'edit' || u.searchParams.get('mode') === 'edit'; if (p) out.push({ file: path.resolve(p), source: 'protocol', page: parseInt(u.searchParams.get('page') || '', 10) || null, ...(m ? { mode: 'edit' } : {}) }); } catch (_) {}
       continue;
     }
     const f = path.resolve(a);
-    if (SUPPORTED.includes(path.extname(f).toLowerCase()) && fs.existsSync(f)) out.push({ file: f, source: 'argv' });
+    if (SUPPORTED.includes(path.extname(f).toLowerCase()) && fs.existsSync(f)) out.push({ file: f, source: 'argv', ...(edit && path.extname(f).toLowerCase() === '.pdf' ? { mode: 'edit' } : {}) });
   }
   return out;
 }
@@ -110,6 +111,32 @@ function registerIpc() {
   H('shell:show', (p) => shell.showItemInFolder(p));
   H('shell:open', (p) => shell.openPath(p));
   H('handoff:opened', (x) => { logHandoff({ event: 'opened', ...x }); return true; });
+  // ---------- PDF editor ----------
+  const editDocs = new Set();
+  H('edit:open', async (file) => { const info = await docs.call('open', { file: path.resolve(file) }); editDocs.add(info.docId); return info; });
+  H('edit:close', async (docId) => { editDocs.delete(docId); await docs.call('close', { docId }).catch(() => {}); return true; });
+  H('edit:info', (docId, page) => docs.call('editInfo', { docId, page }));
+  H('edit:imagePng', async (docId, page, i) => 'data:image/png;base64,' + Buffer.from(await docs.call('imagePng', { docId, page, i })).toString('base64'));
+  const testPick = () => (process.env.MAMBA_READER_UITEST && global.__picks && global.__picks.length ? global.__picks.shift() : undefined);
+  H('edit:pickImage', async () => {
+    const tp = testPick(); if (tp !== undefined) { if (!tp) return null; const ext0 = path.extname(tp).slice(1).toLowerCase(); return `data:image/${{ jpg: 'jpeg' }[ext0] || ext0};base64,` + fs.readFileSync(tp).toString('base64'); }
+    const r = await dialog.showOpenDialog(win, { properties: ['openFile'], filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'webp', 'gif', 'bmp'] }] }); if (r.canceled) return null;
+    const f = r.filePaths[0]; const ext = path.extname(f).slice(1).toLowerCase(); const mt = { jpg: 'jpeg' }[ext] || ext; return `data:image/${mt};base64,` + fs.readFileSync(f).toString('base64');
+  });
+  H('edit:pickPdf', async () => { const tp = testPick(); if (tp !== undefined) return tp || null; const r = await dialog.showOpenDialog(win, { properties: ['openFile'], filters: [{ name: 'PDF', extensions: ['pdf'] }] }); return r.canceled ? null : r.filePaths[0]; });
+  H('edit:save', async (model, saveAs) => {
+    const E = require('./pdfedit'); let out = model.out;
+    if (saveAs || !out) {
+      const def = out || E.editedName(model.file);
+      if (saveAs || process.env.MAMBA_READER_EDIT_ASK) { const r = await dialog.showSaveDialog(win, { defaultPath: def, filters: [{ name: 'PDF', extensions: ['pdf'] }] }); if (r.canceled) return null; out = r.filePath; if (!/\.pdf$/i.test(out)) out += '.pdf'; }
+      else out = def;
+    }
+    if (process.env.MAMBA_READER_EDIT_OUT) out = process.env.MAMBA_READER_EDIT_OUT;
+    const r = await E.saveEdit({ ...model, out }, docs);
+    return r;
+  });
+  H('sig:list', () => { try { return JSON.parse(fs.readFileSync(path.join(app.getPath('userData'), 'signatures.json'), 'utf8')); } catch (_) { return []; } });
+  H('sig:save', (list) => { fs.writeFileSync(path.join(app.getPath('userData'), 'signatures.json'), JSON.stringify(list || [])); return true; });
   H('app:info', () => ({ version: app.getVersion(), userData: app.getPath('userData'), protocol: app.isDefaultProtocolClient(PROTO) }));
 }
 async function exportNotes(b, data, fmt, dest, vocab) {
@@ -147,6 +174,11 @@ function registerTestIpc() {
   ipcMain.handle('test:bookData', (_e, id) => store.bookData(id));
   ipcMain.handle('test:handoffLog', () => { try { return fs.readFileSync(path.join(app.getPath('userData'), 'handoff.log'), 'utf8'); } catch (_) { return ''; } });
   ipcMain.handle('test:size', (_e, w, h) => { win.setContentSize(w, h); return true; });
+  ipcMain.handle('test:fixtures', () => process.env.MAMBA_READER_FIXTURES || '');
+  ipcMain.handle('test:input', (_e, ev) => { win.webContents.sendInputEvent(ev); return true; });
+  ipcMain.handle('test:nextPick', (_e, v) => { (global.__picks = global.__picks || []).push(v); return true; });
+  ipcMain.handle('test:inspect', (_e, f) => docs.call('inspect', { file: f }));
+  ipcMain.handle('test:hash', (_e, f) => require('crypto').createHash('sha256').update(fs.readFileSync(f)).digest('hex'));
 }
 function createWindow() {
   win = new BrowserWindow({ width: 1320, height: 880, minWidth: 900, minHeight: 600, backgroundColor: '#f7f5f0', title: 'Mamba Reader', icon: path.join(__dirname, '..', 'build', 'icon.png'),

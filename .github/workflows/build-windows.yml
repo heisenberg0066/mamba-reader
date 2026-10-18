@@ -27,7 +27,9 @@ jobs:
         run: npm ci
 
       - name: Unit tests (Node + MuPDF worker)
-        run: node test/run-tests.js
+        run: |
+          node test/run-tests.js
+          node test/edit-tests.js
 
       - name: Build installer, portable and zip
         run: npx electron-builder --win --x64 --publish never
@@ -52,6 +54,23 @@ jobs:
           $p = Start-Process -FilePath "dist\win-unpacked\Mamba Reader.exe" -PassThru -Wait
           Get-Content $env:MAMBA_READER_REPORT
           if ($p.ExitCode -ne 0) { throw "UI test failed ($($p.ExitCode))" }
+
+      - name: PDF editor UI test of the packaged app (real input events, saved PDF verified)
+        shell: pwsh
+        run: |
+          $fx = "$env:RUNNER_TEMP\edit-fixtures"
+          node test/edit-fixture.js $fx
+          $env:MAMBA_READER_DATA = "$env:RUNNER_TEMP\mr-edittest"
+          $env:MAMBA_READER_NO_LOCK = '1'
+          $env:MAMBA_READER_FIXTURES = $fx
+          $env:MAMBA_READER_UITEST = "$PWD\test\ui-edit.js"
+          $env:MAMBA_READER_SHOTS = "$PWD\shots"
+          $env:MAMBA_READER_REPORT = "$env:RUNNER_TEMP\ui-edit-report.txt"
+          $p = Start-Process -FilePath "dist\win-unpacked\Mamba Reader.exe" -PassThru
+          if (!$p.WaitForExit(240000)) { $p.Kill(); throw 'editor UI test timed out' }
+          Get-Content $env:MAMBA_READER_REPORT
+          if ($p.ExitCode -ne 0) { throw "editor UI test failed ($($p.ExitCode))" }
+          Get-ChildItem $fx
 
       - name: Install silently, verify path, registry and handoff end to end
         shell: pwsh
@@ -87,6 +106,14 @@ jobs:
           $ok = $false; for ($i = 0; $i -lt 60; $i++) { Start-Sleep 1; if (Select-String -Path $log -Pattern '"event":"opened".*"source":"protocol"' -Quiet) { $ok = $true; break } }
           Get-Content $log
           if (!$ok) { throw 'protocol handoff failed' }
+          # 3) edit mode, as Mamba Convert's "Edit PDF" launches it: --edit <file>, then mamba-reader://edit?path=
+          Start-Process -FilePath $exe -ArgumentList "--edit `"$pdf`""
+          $ok = $false; for ($i = 0; $i -lt 60; $i++) { Start-Sleep 1; if (Select-String -Path $log -Pattern '"event":"opened".*"source":"argv".*"mode":"edit"' -Quiet) { $ok = $true; break } }
+          if (!$ok) { Get-Content $log; throw '--edit handoff failed' }
+          Start-Process ('mamba-reader://edit?path=' + [uri]::EscapeDataString($pdf))
+          $ok = $false; for ($i = 0; $i -lt 60; $i++) { Start-Sleep 1; if (Select-String -Path $log -Pattern '"event":"opened".*"source":"protocol".*"mode":"edit"' -Quiet) { $ok = $true; break } }
+          Get-Content $log
+          if (!$ok) { throw 'mamba-reader://edit handoff failed' }
           $procs = @(Get-Process 'Mamba Reader' -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowHandle -ne 0 })
           Write-Host "Visible Mamba Reader windows: $($procs.Count) (single instance expected)"
           if ($procs.Count -gt 1) { throw 'second instance was not forwarded' }

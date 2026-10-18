@@ -22,6 +22,7 @@
       <div class="menu hidden" id="exportMenu">
         <button data-x="md" data-i18n="exportMd"></button><button data-x="txt" data-i18n="exportTxt"></button><button data-x="pdf" data-i18n="exportPdfSummary"></button><hr><button data-x="annotated" data-i18n="exportAnnotated"></button>
       </div></div>
+    <button class="ghost small" id="editBtn" data-i18n="editPdf"></button>
     <button class="ib" id="fsBtn" data-i18n-title="fullscreen">⛶</button>
   </div>
   <div class="grow"></div>
@@ -96,13 +97,47 @@
   </div>
 </section>
 
+<!-- PDF EDITOR -->
+<section id="editor" class="view">
+  <div class="edtop">
+    <button class="ib" id="edCloseBtn" data-i18n-title="edClose">⟵</button>
+    <b class="edfile" id="edFile"></b>
+    <div class="edtools" id="edTools">
+      <button data-et="select" data-i18n-title="edSelect">↖</button>
+      <button data-et="text" data-i18n-title="edEditText">✎<small>T</small></button>
+      <button data-et="addtext" data-i18n-title="edAddText">T<small>+</small></button>
+      <button data-et="image" data-i18n-title="edImage">🖼</button>
+      <button data-et="whiteout" data-i18n-title="edWhiteout">▭</button>
+      <button data-et="redact" data-i18n-title="edRedact">■</button>
+      <span class="sep"></span>
+      <button data-et="sign" data-i18n-title="edSign">✍</button>
+      <button data-et="initials" data-i18n-title="edInitials">AB</button>
+      <button data-et="date" data-i18n-title="edDate">📅</button>
+      <span class="sep"></span>
+      <button class="ib" id="edUndo" data-i18n-title="edUndo">↶</button><button class="ib" id="edRedo" data-i18n-title="edRedo">↷</button>
+      <button class="ib" id="edZoomOut">−</button><button class="ib" id="edZoomIn">+</button>
+    </div>
+    <div class="grow"></div>
+    <span class="muted small" id="edHint"></span>
+    <button class="ghost" id="edSaveAs" data-i18n="edSaveAs"></button>
+    <button class="primary" id="edSave" data-i18n="edSave"></button>
+  </div>
+  <div class="edbody">
+    <aside class="edpages" id="edPages"></aside>
+    <div class="edmain" id="edMain"></div>
+    <aside class="edprops" id="edProps"></aside>
+  </div>
+</section>
+
 <div id="selPop" class="pop hidden"></div>
 <div id="annPop" class="pop card hidden"></div>
 <div id="modal" class="modal hidden"><div class="mbox"><div class="mhead"><b id="mTitle"></b><button class="ib" id="mClose">✕</button></div><div id="mBody"></div></div></div>
 <div id="dropOverlay" class="dropov hidden"><div data-i18n="dropHere"></div></div>
 <div id="toast" class="toast hidden"></div>
 <script src="i18n.js"></script>
+<script src="editor-i18n.js"></script>
 <script src="flip-engine.js"></script>
 <script src="app.js"></script>
+<script src="editor.js"></script>
 </body>
 </html>

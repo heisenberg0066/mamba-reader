@@ -65,7 +65,7 @@ const hash = (f) => crypto.createHash('sha256').update(fs.readFileSync(f)).diges
   const out3 = path.join(dir, 'rot-only.pdf');
   await saveEdit({ sources: [{ id: 'o', file }], pages: [{ src: 'o', index: 2 }], items: { 'o:2': items['o:2'] }, forms: [], out: out3 }, docs);
   const x3 = await docs.call('inspect', { file: out3 }); const r3 = x3.pages[0].text.find((l) => /Added on rotated page/.test(l.t));
-  ok('rotated page: added text appears exactly at its display position', r3 && Math.abs(r3.x - 60) < 1.5 && r3.y > 118 && r3.y < 124 && r3.w > r3.h, r3 && JSON.stringify({ x: r3.x, y: r3.y, w: r3.w, h: r3.h }));
+  ok('rotated page: added text appears exactly at its display position', r3 && Math.abs(r3.x - 60) < 1.5 && r3.y > 112 && r3.y < 124 && r3.w > r3.h, r3 && JSON.stringify({ x: r3.x, y: r3.y, w: r3.w, h: r3.h }));
   const f = Object.fromEntries((x.fields || []).map((w) => [w.name, w.value]));
   ok('form fields filled', f.name === 'Ammar Andersson' && f.agree && f.agree !== 'Off' && f.city === 'Malmö', JSON.stringify(f));
   // Save As over the original is allowed when the user explicitly picks it

@@ -85,7 +85,7 @@ const R = {
     let r; try { r = await api.openBook(id); } catch (e) { toast(String(e.message || e).replace(/^Error invoking remote method '[^']+': (Error: )?/, ''), 5000); return null; }
     Object.assign(this, { book: r.book, info: r.info, data: { annotations: [], bookmarks: [], ...r.data }, docId: r.info.docId, textCache: new Map(), hits: [], undo: [] });
     document.body.classList.add('reading'); showView('reader');
-    $('#bookTitle').textContent = this.book.title; $('#pgTotal').textContent = '/ ' + this.info.pageCount;
+    $('#bookTitle').textContent = this.book.title; $('#editBtn').classList.toggle('hidden', !/\.pdf$/i.test(this.book.path || '')); $('#pgTotal').textContent = '/ ' + this.info.pageCount;
     this.cur = Math.min(this.info.pageCount - 1, page != null ? page : this.book.lastPage || 0);
     this.mode = this.book.mode || S.mode || 'flip';
     this.buildView(); this.renderSide(); this.buildThumbs(); this.updateBar();
@@ -382,6 +382,7 @@ function wire() {
   $('#homeBtn').onclick = () => R.close(); $('#backLib').onclick = () => R.close();
   $('#openBooks').onclick = async () => { const p = await api.pickFiles(); if (p.length) { const added = await Lib.add(p); if (added.length === 1) R.open(added[0].id); } };
   $('#libSearch').oninput = () => Lib.render(); $('#libSort').onchange = () => Lib.render();
+  $('#editBtn').onclick = () => { if (R.book && window.Editor) Editor.open(R.book.path); };
   $('#vocabOpen').onclick = openVocab; $('#mClose').onclick = () => $('#modal').classList.add('hidden');
   $('#bkExport').onclick = async () => { const p = await api.backupExport(); if (p) toast(t('backupSaved') + ': ' + p, 4000); };
   $('#bkImport').onclick = async () => { try { const r = await api.backupImport(); if (r) { toast(t('imported', { b: r.books, a: r.annotations })); Lib.load(); } } catch (e) { toast(String(e.message || e)); } };
@@ -429,6 +430,7 @@ function wire() {
   setInterval(async () => { if (R.book && document.hasFocus() && Date.now() - R.lastAct < 120000) { Lib.stats = await api.addMinutes(R.book.id, 0.5); Lib.renderStats(); } }, 30000);
   addEventListener('beforeunload', () => R.flushSave());
   api.onOpenExternal(async (x) => {
+    if (x.mode === 'edit' && window.Editor) { if (document.body.classList.contains('editing') && !(await Editor.close())) return; const r = await Editor.open(x.file, { source: x.source }); if (r) toast(t('edTitle') + ': ' + x.file.split(/[\\/]/).pop()); return; }
     const added = await Lib.add([x.file]); if (!added.length) return; const r = await R.open(added[0].id, x.page != null ? x.page - 1 : undefined);
     if (r) { toast(t('opened', { t: r.book.title })); api.handoffOpened({ file: x.file, source: x.source, bookId: r.book.id, pageCount: r.info.pageCount }); }
   });

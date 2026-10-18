@@ -31,3 +31,8 @@ async function makeFixture() {
   return { main: Buffer.from(await doc.save()), merge: Buffer.from(await other.save()), png: png(60, 60, (x, y) => [20, 160, 60 + x]) };
 }
 module.exports = { makeFixture, png };
+
+if (require.main === module) {
+  const dir = process.argv[2]; const fs = require('fs'); const path = require('path'); fs.mkdirSync(dir, { recursive: true });
+  makeFixture().then((f) => { fs.writeFileSync(path.join(dir, 'invoice.pdf'), f.main); fs.writeFileSync(path.join(dir, 'appendix.pdf'), f.merge); fs.writeFileSync(path.join(dir, 'photo.png'), module.exports.png(160, 120, (x, y) => [40 + x, 90 + (y % 60), 200])); console.log('fixtures in ' + dir); });
+}
