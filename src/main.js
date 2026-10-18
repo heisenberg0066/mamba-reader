@@ -171,7 +171,7 @@ app.whenReady().then(async () => {
     if (SELFTEST && !process.env.MAMBA_READER_SELFTEST && !process.env.CI) dialog.showMessageBoxSync({ message: `Self-test: ${r.passed} passed, ${r.failed} failed`, detail: r.lines.join('\n') });
     const code = r.failed ? 1 : 0; setTimeout(() => process.exit(code), 3000).unref && 0; console.log('selftest: exiting'); try { docs.terminate(); } catch (_) {} setImmediate(() => app.exit(code)); return;
   }
-  pendingOpen.push(...filesFromArgs(process.argv));
+  const initial = filesFromArgs(process.argv); initial.forEach((x) => logHandoff({ event: 'received', ...x, startup: true })); pendingOpen.push(...initial);
   createWindow();
   if (process.env.MAMBA_READER_UITEST) {
     win.webContents.once('did-finish-load', () => setTimeout(async () => {
