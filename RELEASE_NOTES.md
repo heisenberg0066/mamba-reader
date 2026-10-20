@@ -1,3 +1,29 @@
+**1.1.1**: fixes the reader tool bar in **Scroll** mode (and on smaller or scaled screens).
+
+**Downloads**
+* `MambaReader-Setup-1.1.1-x64.exe`: the installer. It installs per user to `%LOCALAPPDATA%\Programs\Mamba Reader`.
+* `MambaReader-Portable-1.1.1-x64.exe`: a single exe, no install needed.
+* `MambaReader-1.1.1-win-x64.zip`: the unpacked app.
+
+The builds are not code-signed. If SmartScreen warns you, click **More info → Run anyway**.
+
+**Fixed**
+* **The reader header was squashed.** The **Edit PDF** button added in 1.1.0 stretched to fill the whole header row. Everything else got squeezed:
+  * the Flip/Scroll switch was cut to "Fli", so in Scroll mode the active **Scroll** button could not be seen;
+  * the book title shrank to one letter and **Export** wrapped onto two lines;
+  * at 125 %/150 % Windows scaling, fullscreen, the reading timer, the theme and the language switch fell off the window.
+* **Header controls now keep their normal size.** Only the book title shortens. Anything that still does not fit goes into a **⋯** menu, and it moves back when the window gets wider. This also works in Arabic (right to left).
+* **Switching Flip ↔ Scroll keeps the exact page you were on.** Before, it could jump back one page because of the two-page spread.
+
+**Tests**
+A new layout check runs on `windows-latest` for every build. It covers both modes on 1366×768, 1280×720, 1920×1080 and ~1000 px wide windows, at 100/125/150 % scaling. It:
+* uses the bounding box of every control to check it is visible, inside the window, not covered and not overlapping its neighbours;
+* checks that pages do not overlap;
+* adds a highlight and a comment on every page in Scroll mode;
+* switches modes and checks that page, tool and annotations are kept.
+
+---
+
 **1.1.0**: a visual, offline **PDF editor**. Click **Edit PDF** in the reader bar, or use **Edit PDF** in Mamba Convert, which starts `Mamba Reader.exe --edit <file>` or `mamba-reader://edit?path=…`.
 
 **Downloads**
