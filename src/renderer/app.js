@@ -19,6 +19,7 @@ function applyI18n() {
   $$('[data-i18n-ph]').forEach((e) => { e.placeholder = t(e.dataset.i18nPh); });
   $$('.lang button').forEach((b) => b.classList.toggle('on', b.dataset.lang === S.lang));
   Lib.render(); if (R.book) { R.renderSide(); }
+  Bar.layout();
 }
 function setTheme(th) { document.body.classList.remove('theme-light', 'theme-sepia', 'theme-dark'); document.body.classList.add('theme-' + th); $('#themeSel').value = th; }
 
@@ -88,13 +89,13 @@ const R = {
     $('#bookTitle').textContent = this.book.title; $('#editBtn').classList.toggle('hidden', !/\.pdf$/i.test(this.book.path || '')); $('#pgTotal').textContent = '/ ' + this.info.pageCount;
     this.cur = Math.min(this.info.pageCount - 1, page != null ? page : this.book.lastPage || 0);
     this.mode = this.book.mode || S.mode || 'flip';
-    this.buildView(); this.renderSide(); this.buildThumbs(); this.updateBar();
+    Bar.layout(); this.buildView(); this.renderSide(); this.buildThumbs(); this.updateBar();
     return r;
   },
   async close(silent) {
     if (!this.book) return; this.flushSave(); if (this.flip) { this.flip.destroy(); this.flip = null; }
     $('#scrollView').replaceChildren(); this.live.clear(); await api.closeBook(this.book.id); this.book = null;
-    if (!silent) { document.body.classList.remove('reading'); showView('library'); Lib.load(); }
+    if (!silent) { document.body.classList.remove('reading'); showView('library'); Lib.load(); Bar.layout(); }
   },
   // ---------- views ----------
   buildView() {
@@ -105,8 +106,8 @@ const R = {
     const start = this.cur;
     if (this.mode === 'flip') {
       this._building = true; this.flip = new MambaFlip(flipHost, { embedded: true, toolbar: false, thumbs: false, keyboard: false, noDrag: '.tl span, .tb, .nt', title: this.book.title, rtl: !!this.book.rtl,
-        pages: this.info.pages.map(([w, h]) => ({ src: '', w, h })), renderPage: (i, d, w, h) => d.append(this.pageView(i, w, h, true)), onChange: (st) => { if (!this._building) this.onPage(st.visible[0]); } });
-      this._building = false; this.flip.go(start, true); this.cur = start; this.onPage(this.flip.state().visible[0]); this.flip.setNavLocked(this.tool !== 'select');
+        pages: this.info.pages.map(([w, h]) => ({ src: '', w, h })), renderPage: (i, d, w, h) => d.append(this.pageView(i, w, h, true)), onChange: (st) => { if (!this._building) this.onPage(st.visible.includes(this.cur) ? this.cur : st.visible[0]); } });
+      this._building = false; this.flip.go(start, true); this.cur = start; const vis = this.flip.state().visible; this.onPage(vis.includes(start) ? start : vis[0]); this.flip.setNavLocked(this.tool !== 'select');
       const origZoom = this.flip.applyZoom.bind(this.flip); this.flip.applyZoom = () => { origZoom(); this.zoomLabel(); this.refreshRes(); };
     } else { this.cur = start; this.buildScroll(); }
     this.zoomLabel();
@@ -361,6 +362,43 @@ function hidePops() { $('#selPop').classList.add('hidden'); $('#annPop').classLi
 function promptBox(label, value) { return new Promise((res) => { const pop = $('#annPop'); const inp = el('input', { value: value || '' }); const ok = () => { hidePops(); res(inp.value); }; inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') ok(); if (e.key === 'Escape') { hidePops(); res(null); } }); pop.replaceChildren(el('b', {}, label), inp, el('div', { class: 'row' }, el('button', { class: 'primary', onclick: ok }, t('save')), el('button', { onclick: () => { hidePops(); res(null); } }, t('cancel')))); showPopAt(pop, innerWidth / 2, innerHeight / 3); setTimeout(() => inp.focus(), 20); }); }
 function showView(v) { $$('.view').forEach((x) => x.classList.toggle('active', x.id === v)); }
 
+// ---------- responsive header: whatever does not fit goes into the ⋯ menu ----------
+// Items leave the bar in this order (least important first) and come back in reverse when there is room again.
+const Bar = {
+  order: ['#timer', '.top > .lang', '#themeSel', '#fsBtn', '#editBtn', '#readerBar > .menu-wrap', '#bmBtn', '#zoomGrp'],
+  slots: null,
+  init() {
+    this.slots = this.order.map((sel) => { const e = $(sel); const mark = document.createComment('slot ' + sel); e.before(mark); return { e, mark, reader: !!e.closest('#readerBar') }; });
+    $('#moreBtn').onclick = (ev) => { ev.stopPropagation(); $('#moreMenu').classList.toggle('hidden'); };
+    $('#moreMenu').addEventListener('click', (ev) => { const b = ev.target.closest('button'); if (b && !b.closest('#exportBtn') && !b.closest('.lang')) $('#moreMenu').classList.add('hidden'); });
+    document.addEventListener('pointerdown', (ev) => { if (!ev.target.closest('#moreWrap')) $('#moreMenu').classList.add('hidden'); }, true);
+    addEventListener('resize', () => this.layout());
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => this.layout());
+    this.layout();
+  },
+  overflows() {
+    const top = $('.top'); const cs = getComputedStyle(top); const rtl = document.documentElement.dir === 'rtl'; const r = top.getBoundingClientRect();
+    const lo = r.left + parseFloat(cs.paddingLeft) - 0.5, hi = r.right - parseFloat(cs.paddingRight) + 0.5;
+    const kids = [...top.children, ...$('#readerBar').children].filter((e) => e.id !== 'readerBar' && !e.classList.contains('grow') && getComputedStyle(e).display !== 'none');
+    if (kids.some((e) => { const k = e.getBoundingClientRect(); return k.width > 0 && (rtl ? k.left < lo : k.right > hi); })) return true;
+    const t = $('#bookTitle'); return document.body.classList.contains('reading') && t.textContent && t.getBoundingClientRect().width < 60 && t.scrollWidth > t.clientWidth + 1;
+  },
+  layout() {
+    if (!this.slots) return; const menu = $('#moreMenu'), wrap = $('#moreWrap');
+    for (const s of this.slots) if (s.e.parentElement === menu) s.mark.after(s.e); // everything back in place
+    wrap.classList.add('hidden');
+    if (!this.overflows()) { menu.classList.add('hidden'); return; }
+    wrap.classList.remove('hidden');
+    for (const s of this.slots) {
+      if (!this.overflows()) break;
+      if (s.reader && !document.body.classList.contains('reading')) continue; // reader-only controls stay hidden in the library
+      menu.append(s.e);
+    }
+    // keep the menu in the original visual order
+    for (const s of this.slots.slice().reverse()) if (s.e.parentElement === menu) menu.append(s.e);
+  },
+};
+
 // ---------- vocabulary manager ----------
 function openVocab() {
   const body = $('#mBody'); $('#mTitle').textContent = t('allWords');
@@ -437,6 +475,6 @@ function wire() {
 }
 
 (async () => {
-  S = await api.settings(); setTheme(S.theme || 'light'); wire(); await Lib.load(); applyI18n(); api.ready();
-  window.__reader = { R, Lib, t };
+  S = await api.settings(); setTheme(S.theme || 'light'); wire(); Bar.init(); await Lib.load(); applyI18n(); api.ready();
+  window.__reader = { R, Lib, t, Bar };
 })();

@@ -16,19 +16,20 @@
     <div class="btitle" id="bookTitle"></div>
     <div class="seg" id="modeSeg"><button data-v="flip" data-i18n="flip"></button><button data-v="scroll" data-i18n="scroll"></button></div>
     <button class="ib" id="prevPg">‹</button><input id="pgInput" class="pg"><span id="pgTotal" class="muted"></span><button class="ib" id="nextPg">›</button>
-    <button class="ib" id="zoomOut">−</button><button class="ib wide" id="zoomVal">100%</button><button class="ib" id="zoomIn">+</button>
+    <div class="row zgrp" id="zoomGrp"><button class="ib" id="zoomOut">−</button><button class="ib wide" id="zoomVal">100%</button><button class="ib" id="zoomIn">+</button></div>
     <button class="ib" id="bmBtn" data-i18n-title="bookmarkPage">☆</button>
     <div class="menu-wrap"><button class="ib wide" id="exportBtn" data-i18n="export"></button>
       <div class="menu hidden" id="exportMenu">
         <button data-x="md" data-i18n="exportMd"></button><button data-x="txt" data-i18n="exportTxt"></button><button data-x="pdf" data-i18n="exportPdfSummary"></button><hr><button data-x="annotated" data-i18n="exportAnnotated"></button>
       </div></div>
-    <button class="ghost small" id="editBtn" data-i18n="editPdf"></button>
+    <button class="ib wide" id="editBtn" data-i18n="editPdf"></button>
     <button class="ib" id="fsBtn" data-i18n-title="fullscreen">⛶</button>
   </div>
   <div class="grow"></div>
   <span class="timer" id="timer" data-i18n-title="readingToday">⏱ 0</span>
   <select id="themeSel" class="sel"><option value="light" data-i18n="light"></option><option value="sepia" data-i18n="sepia"></option><option value="dark" data-i18n="dark"></option></select>
   <div class="lang"><button data-lang="en">EN</button><button data-lang="ar">عربي</button></div>
+  <div class="ovf-wrap hidden" id="moreWrap"><button class="ib" id="moreBtn" data-i18n-title="more">⋯</button><div class="menu ovf-menu hidden" id="moreMenu"></div></div>
 </header>
 
 <!-- LIBRARY -->

@@ -1,7 +1,7 @@
 'use strict';
 window.I18N = {
   en: {
-    appName: 'Mamba Reader', library: 'Library', sidebar: 'Sidebar', flip: 'Flip', scroll: 'Scroll', bookmarkPage: 'Bookmark this page (B)', export: 'Export ▾',
+    appName: 'Mamba Reader', library: 'Library', sidebar: 'Sidebar', flip: 'Flip', scroll: 'Scroll', bookmarkPage: 'Bookmark this page (B)', export: 'Export ▾', more: 'More',
     exportMd: 'Notes → Markdown (.md)', exportTxt: 'Notes → Text (.txt)', exportPdfSummary: 'Notes → PDF summary', exportAnnotated: 'Annotated PDF copy…', fullscreen: 'Full screen (F11)',
     readingToday: 'Reading time today', light: 'Light', sepia: 'Sepia', dark: 'Dark', openBooks: 'Open books…', searchLibrary: 'Search title, author, tag…',
     sortRecent: 'Recently read', sortTitle: 'Title', sortAdded: 'Recently added', sortProgress: 'Progress', libEmpty: 'Your shelf is empty. Drop PDFs, EPUBs, images or Mamba Convert flipbooks here, or click “Open books…”.',
@@ -18,7 +18,7 @@ window.I18N = {
     progress: '{p}% · page {c} of {n}', never: 'not started', words: 'words',
   },
   ar: {
-    appName: 'مامبا ريدر', library: 'المكتبة', sidebar: 'الشريط الجانبي', flip: 'تقليب', scroll: 'تمرير', bookmarkPage: 'إضافة إشارة مرجعية (B)', export: 'تصدير ▾',
+    appName: 'مامبا ريدر', library: 'المكتبة', sidebar: 'الشريط الجانبي', flip: 'تقليب', scroll: 'تمرير', bookmarkPage: 'إضافة إشارة مرجعية (B)', export: 'تصدير ▾', more: 'المزيد',
     exportMd: 'الملاحظات ← Markdown', exportTxt: 'الملاحظات ← نص', exportPdfSummary: 'الملاحظات ← ملخص PDF', exportAnnotated: 'نسخة PDF مع التعليقات…', fullscreen: 'ملء الشاشة',
     readingToday: 'وقت القراءة اليوم', light: 'فاتح', sepia: 'بني', dark: 'داكن', openBooks: 'فتح كتب…', searchLibrary: 'ابحث بالعنوان أو المؤلف أو الوسم…',
     sortRecent: 'آخر ما قُرئ', sortTitle: 'العنوان', sortAdded: 'المضاف حديثاً', sortProgress: 'التقدم', libEmpty: 'رفّك فارغ. أفلت ملفات PDF أو EPUB أو صور أو كتب تقليب من مامبا كونفرت هنا، أو انقر «فتح كتب…».',

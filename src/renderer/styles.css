@@ -12,6 +12,15 @@ input,select,textarea{border:1px solid var(--line);border-radius:8px;padding:6px
 .brand{display:flex;align-items:center;gap:8px;cursor:pointer}.logo{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#ff7a00,#ffc15e);color:#fff;font-weight:800;display:grid;place-items:center}.bn{font-weight:700}
 body:not(.reading) .rt-only{display:none!important}
 .btitle{max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;margin:0 6px}
+/* header: controls keep their natural size (never squashed); only the book title shrinks, and whatever still
+   does not fit goes into the ⋯ menu (see Bar.layout in app.js) */
+.top{flex-wrap:nowrap}.top>*,#readerBar>*{flex:none}.top>.grow{flex:1 1 0;min-width:0}
+#readerBar{flex:0 1 auto}#readerBar>.btitle{flex:0 1 auto;min-width:48px}
+.top button,.top select,.top .timer{white-space:nowrap}.top button.ghost{width:auto;margin:0}
+.ovf-wrap{position:relative;flex:none}.ovf-menu{display:flex;flex-direction:column;align-items:stretch;gap:6px;min-width:200px;padding:8px}
+.ovf-menu>*{flex:none}.ovf-menu .row{flex-wrap:wrap}.ovf-menu .ovf-grp{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.ovf-menu>button,.ovf-menu .menu-wrap>button{display:block;width:100%;text-align:start;border:1px solid var(--line);background:var(--card)}
+.ovf-menu .menu-wrap .menu{position:static;box-shadow:none;margin-top:4px;min-width:0}.ovf-menu .lang{align-self:flex-start}.ovf-menu .timer{padding:2px 4px}
 .ib{padding:4px 9px;min-width:32px;border-radius:7px}.ib.wide{min-width:58px}.ib.on{border-color:var(--accent);color:var(--accent)}
 .pg{width:64px;text-align:center;padding:4px}.sel{padding:5px}.sel.small{padding:3px;font-size:12px}
 .seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}.seg button{border:0;border-radius:0;padding:5px 10px}.seg button.on{background:var(--accent-soft);color:var(--accent);font-weight:700}
@@ -147,3 +156,4 @@ body.editing header.top{display:none}
 .row.end{justify-content:flex-end}
 
 .edtop button.ghost,.edtop button.primary{width:auto;margin:0;flex:none}
+.ovf-menu>button.ib[title]::after{content:"  " attr(title)}
