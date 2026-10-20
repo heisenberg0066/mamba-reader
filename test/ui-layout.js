@@ -4,7 +4,7 @@
 // every reader control is visible, inside the window, not covered by something else and not overlapping its
 // neighbours, and that scroll-mode pages do not overlap. A screenshot is saved for every case.
 (async () => {
-  const lines = []; let passed = 0, failed = 0;
+  let S_; const lines = []; let passed = 0, failed = 0;
   const ok = (n, c, x = '') => { c ? passed++ : failed++; lines.push(`${c ? 'PASS' : 'FAIL'}  ${n}${x ? '  — ' + x : ''}`); };
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const until = async (fn, ms = 6000) => { const t0 = Date.now(); while (Date.now() - t0 < ms) { try { const v = fn(); if (v) return v; } catch (_) {} await sleep(60); } return null; };
@@ -19,12 +19,11 @@
   const pdf = Lib.books.find((b) => b.kind === 'pdf');
   await R.open(pdf.id, 0);
   const visible = (e) => { if (!e || !e.isConnected) return false; const cs = getComputedStyle(e); if (cs.display === 'none' || cs.visibility === 'hidden') return false; const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
-  const label = (e) => '#' + (e.id || e.dataset.tool || e.dataset.v || e.dataset.p || e.dataset.lang || e.className || e.tagName) ;
-  const controls = () => [
-    ...$$('.top .brand, #modeSeg > button, .top > .lang > button, #readerBar > button, #readerBar > input, #readerBar > span, #readerBar > .seg, #readerBar > .menu-wrap > button, #readerBar .btitle, #readerBar > .ovf-wrap > button, .top > #timer, .top > #themeSel, .top > .lang'),
-    ...$$('#tools > button, #tools > select, #tools > .colors, #tools > .ovf-wrap > button'),
-    ...$$('#sideTabs > button'),
-  ].filter((e) => !e.classList.contains('hidden') && getComputedStyle(e).display !== 'none' && !e.closest('.hidden, .ovf-menu'));
+  const label = (e) => '#' + (e.id || e.dataset.tool || e.dataset.v || e.dataset.p || e.dataset.lang || e.dataset.x || e.title || e.className || e.tagName);
+  // every interactive control in the header, the annotation tool bar and the sidebar tabs (items that were moved
+  // into the closed ⋯ menu are skipped here and checked separately with the menu open)
+  const controls = (root = document) => [...root.querySelectorAll('.top .brand, .top button, .top input, .top select, .top .timer, #readerBar .btitle, #tools > button, #tools > select, #tools .cf, #sideTabs > button')]
+    .filter((e) => !e.closest('.hidden') && getComputedStyle(e).display !== 'none' && !(e.closest('.menu') && root === document));
   const inter = (a, b) => Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left)) * Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
   const check = (name) => {
     const errs = []; const cs = controls(); const W = innerWidth, H = innerHeight;
@@ -56,6 +55,13 @@
       if (ws.some((r) => r.width < 100)) errs.push('page has no width');
       if (sv.scrollWidth > sv.clientWidth + 1) errs.push(`pages wider than the view (${sv.scrollWidth} > ${sv.clientWidth})`);
     }
+    // the ⋯ menu: open it and check that everything inside is reachable
+    if ($('#moreWrap') && !$('#moreWrap').classList.contains('hidden')) {
+      $('#moreBtn').click(); const mc = controls($('#moreMenu'));
+      if (!mc.length) errs.push('⋯ menu is empty');
+      for (const e of mc) { const r = e.getBoundingClientRect(); if (r.width < 8 || r.height < 8 || r.left < -0.5 || r.right > W + 0.5 || r.bottom > H + 0.5) { errs.push(`⋯ menu: ${label(e)} not visible`); continue; } const hit = document.elementFromPoint(r.left + Math.min(r.width / 2, 10), r.top + r.height / 2); if (!hit || !(e === hit || e.contains(hit))) errs.push(`⋯ menu: ${label(e)} covered by ${hit ? label(hit) : 'nothing'}`); }
+      $('#moreBtn').click();
+    }
     ok(name, !errs.length, errs.slice(0, 8).join('; ') + (errs.length > 8 ? ` (+${errs.length - 8} more)` : ''));
     return errs;
   };
@@ -66,14 +72,45 @@
       await setMode(m); if (m === 'scroll') R.setZoom(R.zoom); await sleep(600);
       check(`${m} ${scr}${tag} (${innerWidth}x${innerHeight} css): all reader controls visible, no overlap`);
       await api.test.shot(`${prefix}${m}-${scr}${tag}`);
+      if (m === 'scroll' && $('#moreWrap') && !$('#moreWrap').classList.contains('hidden')) { $('#moreBtn').click(); await sleep(150); await api.test.shot(`${prefix}${m}-${scr}${tag}-more-menu`); $('#moreBtn').click(); }
     }
   }
+  // Arabic (right-to-left, longer labels) at the narrowest size
+  { const [w, h, scr] = sizes[3]; await api.test.size(w, h); S_ = await api.setSettings({ lang: 'ar' }); document.querySelector('.lang button[data-lang="ar"]').click(); await sleep(600);
+    for (const m of ['scroll', 'flip']) { await setMode(m); check(`${m} ${scr}${tag} Arabic RTL: all reader controls visible, no overlap`); }
+    await api.test.shot(`${prefix}flip-${scr}${tag}-arabic`);
+    document.querySelector('.lang button[data-lang="en"]').click(); await sleep(400); }
+  // scroll mode: highlight + comment on every page, through the real tool bar buttons and selection pop-up
+  await api.test.size(sizes[0][0], sizes[0][1]); await sleep(400); await setMode('scroll');
+  const visPage = (i) => [...document.querySelectorAll(`#scrollView .pgv[data-page="${i}"]`)][0];
+  const selectSpan = (sp) => { const rg = document.createRange(); rg.selectNodeContents(sp); getSelection().removeAllRanges(); getSelection().addRange(rg); sp.dispatchEvent(new MouseEvent('mouseup', { bubbles: true })); };
+  const nPages = R.info.pageCount; const made = [];
+  for (let i = 0; i < nPages; i++) {
+    R.go(i, true); await sleep(300);
+    const p = await until(() => visPage(i) && visPage(i)._tl.children.length > 3 && visPage(i)); if (!p) { ok(`scroll page ${i + 1}: page + text layer rendered`, false); continue; }
+    p.scrollIntoView({ block: 'center' }); await sleep(200);
+    // 1) highlight tool from the tool bar
+    $('#tools [data-tool="highlight"]').click(); const b1 = R.data.annotations.length; selectSpan(p._tl.children[2]); await sleep(150);
+    const hl = R.data.annotations.length === b1 + 1 && R.data.annotations.at(-1).page === i && !!p._svg.querySelector(`[data-id="${R.data.annotations.at(-1).id}"]`);
+    $('#tools [data-tool="select"]').click();
+    // 2) select text → pop-up → 💬 comment
+    selectSpan(p._tl.children[3]); await until(() => !$('#selPop').classList.contains('hidden'), 2000);
+    const cbtn = [...document.querySelectorAll('#selPop button')].find((b) => b.textContent === '💬'); cbtn.click(); await sleep(80);
+    $('#annPop textarea').value = 'comment p' + (i + 1); $('#annPop .primary').click(); await sleep(80);
+    const a = R.data.annotations.at(-1); const cm = a.page === i && a.comment === 'comment p' + (i + 1) && !!p._ol.querySelector('.nt');
+    if (hl && cm) made.push(R.data.annotations.at(-2).id, a.id);
+    ok(`scroll page ${i + 1}: highlight tool + comment work`, hl && cm, `highlight ${hl}, comment ${cm}`);
+  }
+  await setMode('flip'); await setMode('scroll'); await sleep(300);
+  ok('annotations made in scroll mode survive Flip ↔ Scroll', made.every((id) => R.byId(id)) && made.length === nPages * 2, `${made.length} kept`);
+  R.flushSave(); await sleep(300); const saved = (await api.test.bookData(pdf.id)).annotations; ok('scroll-mode annotations saved', made.every((id) => saved.some((x) => x.id === id)));
+  for (const id of made) R.remove(id); R.flushSave();
   // state survives switching modes back and forth
   await api.test.size(sizes[0][0], sizes[0][1]); await sleep(400);
   await setMode('scroll'); R.go(2, true); await sleep(500); const pg = R.cur; R.setTool('highlight');
   await setMode('flip'); const keepF = R.tool === 'highlight' && $('#tools [data-tool="highlight"]').classList.contains('on');
   await setMode('scroll'); await sleep(400);
-  ok('mode switch keeps page and tool', pg === 2 && Math.abs(R.cur - 2) <= 1 && keepF && R.tool === 'highlight', `page ${pg}->${R.cur}, tool ${R.tool}`);
+  ok('mode switch keeps page and tool', pg === 2 && R.cur === 2 && keepF && R.tool === 'highlight', `page ${pg}->${R.cur}, tool ${R.tool}`);
   R.setTool('select');
   return { passed, failed, lines };
 })()
