@@ -16,7 +16,7 @@
   const sizes = screens.map(([w, h]) => [Math.round(w / dpr), Math.round((h - 80) / dpr), `${w}x${h}`]);
   const prefix = (typeof window.__layoutPrefix === 'string' ? window.__layoutPrefix : '');
   await api.setSettings({ lang: 'en', theme: 'light', mode: 'flip' });
-  const pdf = Lib.books.find((b) => b.kind === 'pdf');
+  const pdf = Lib.books.find((b) => b.kind === 'pdf' && /läsbok/i.test(b.title)) || Lib.books.find((b) => b.kind === 'pdf'); // the self-test sample book
   await R.open(pdf.id, 0);
   const visible = (e) => { if (!e || !e.isConnected) return false; const cs = getComputedStyle(e); if (cs.display === 'none' || cs.visibility === 'hidden') return false; const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
   const label = (e) => '#' + (e.id || e.dataset.tool || e.dataset.v || e.dataset.p || e.dataset.lang || e.dataset.x || e.title || e.className || e.tagName);

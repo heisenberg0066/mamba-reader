@@ -55,6 +55,23 @@ jobs:
           Get-Content $env:MAMBA_READER_REPORT
           if ($p.ExitCode -ne 0) { throw "UI test failed ($($p.ExitCode))" }
 
+      - name: Layout regression check (Flip + Scroll, several window sizes, 100/125/150% scaling)
+        shell: pwsh
+        run: |
+          $env:MAMBA_READER_DATA = "$env:RUNNER_TEMP\mr-selftest"
+          $env:MAMBA_READER_NO_LOCK = '1'
+          $env:MAMBA_READER_UITEST = "$PWD\test\ui-layout.js"
+          $env:MAMBA_READER_SHOTS = "$PWD\shots\layout"
+          $fail = 0
+          foreach ($sf in '1', '1.25', '1.5') {
+            $env:MAMBA_READER_REPORT = "$env:RUNNER_TEMP\ui-layout-$sf.txt"
+            $p = Start-Process -FilePath "dist\win-unpacked\Mamba Reader.exe" -ArgumentList "--force-device-scale-factor=$sf" -PassThru
+            if (!$p.WaitForExit(240000)) { $p.Kill(); throw "layout check timed out at scale $sf" }
+            Write-Host "--- scale $sf ---"; Get-Content $env:MAMBA_READER_REPORT
+            if ($p.ExitCode -ne 0) { $fail++ }
+          }
+          if ($fail) { throw "layout check failed at $fail scale(s)" }
+
       - name: PDF editor UI test of the packaged app (real input events, saved PDF verified)
         shell: pwsh
         run: |
